@@ -1,0 +1,5 @@
+archive/users/*
+*.txt
+*.exe
+*.pprof
+.vscode
