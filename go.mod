@@ -1,4 +1,4 @@
-module github.com/bennicholls/dazzbot
+module github.com/bennicholls/dazzlerbot
 
 go 1.16
 
