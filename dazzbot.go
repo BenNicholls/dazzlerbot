@@ -45,23 +45,22 @@ func startup() error {
 		return valid
 	}
 
+	//load archive and build markov chain
 	masterVoice.init()
-
 	err = loadArchive("archive")
 	if err != nil {
 		return errors.New("Could not load archive: " + err.Error())
 	}
 
+	//initialize discord connection
 	session, err = discordgo.New("Bot " + config.Token)
 	if err != nil {
-		return errors.New("Could not create discord session.")
+		return errors.New("Could not create discord session: " + err.Error())
 	}
-
 	session.AddHandler(onMessage)
-
 	err = session.Open()
 	if err != nil {
-		return errors.New("Could not open discord connection.")
+		return errors.New("Could not open discord connection: " + err.Error())
 	}
 
 	return nil
@@ -103,6 +102,7 @@ func onMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
 	for _, word := range config.TriggerWords {
 		if strings.Contains(strings.ToLower(m.Content), word) {
 			message = masterVoice.Generate(config.SentenceLen)
+			break
 		}
 	}
 

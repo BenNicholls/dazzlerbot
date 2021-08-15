@@ -71,6 +71,12 @@ type Chain struct {
 	prefixLen  int
 }
 
+func (c *Chain) init() {
+	c.chain = make(map[string]suffixes)
+	c.singletons = make(map[string]string)
+	c.prefixLen = config.DefaultPrefixLen
+}
+
 func (c *Chain) Build(r io.Reader) {
 	br := bufio.NewReader(r)
 	for line, err := br.ReadString('\n'); err == nil; line, err = br.ReadString('\n') {
@@ -139,6 +145,7 @@ func (c *Chain) Generate(n int) string {
 	return strings.Join(words, " ")
 }
 
+//outputs the entire chain. WARNING: for large chains, this takes FOREVER.
 func (c *Chain) output() {
 	for pre, sufs := range c.chain {
 		fmt.Print("(" + strconv.Itoa(sufs.total) + ") " + pre + ": ")
@@ -150,6 +157,7 @@ func (c *Chain) output() {
 	}
 }
 
+//computes and outputs stats for the chain
 func (c *Chain) outputStats() {
 	fmt.Println("Total prefixes: ", len(c.chain)+len(c.singletons))
 	totalSufs := 0
@@ -190,12 +198,6 @@ func (c *Chain) inputTextFromFile(filePath string) error {
 	return nil
 }
 
-func (c *Chain) init() {
-	c.chain = make(map[string]suffixes)
-	c.singletons = make(map[string]string)
-	c.prefixLen = config.DefaultPrefixLen
-}
-
 func (c *Chain) AddString(s string) {
 	if s == "" {
 		return
@@ -207,6 +209,4 @@ func (c *Chain) AddString(s string) {
 
 	sr := strings.NewReader(s)
 	c.Build(sr)
-	fmt.Println("added string: ", s)
-	c.outputStats()
 }
