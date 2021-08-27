@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -17,6 +18,7 @@ import (
 var session *discordgo.Session
 var masterVoice Chain
 var config configuration
+var running bool
 
 func startup() error {
 	//load config
@@ -78,9 +80,42 @@ func main() {
 	fmt.Println("Bot is operational! Press Ctrl-C to shutdown.")
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
-	<-sc
+
+	cli := bufio.NewScanner(os.Stdin)
+	cliInput := make(chan string, 1)
+	go func() {
+		for cli.Scan(); cli.Text() != "exit"; cli.Scan() {
+			cliInput <- cli.Text()
+		}
+		return
+	}()
+
+	running = true
+	for running {
+		select {
+		case <-sc: //os level signal to close
+			running = false
+			break
+		case input := <-cliInput: //handle input from command line
+			processCommand(input)
+		}
+	}
 
 	session.Close()
+}
+
+//process commands from the cli interface. could also be used for the eventual processing of
+//discord slash commands, if those ever make it in
+func processCommand(command string) {
+	if command == "" {
+		return
+	}
+
+	switch command {
+	default:
+		masterVoice.AddString(command)
+		fmt.Println("Added \"" + command + "\" to brain.")
+	}
 }
 
 func onMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
