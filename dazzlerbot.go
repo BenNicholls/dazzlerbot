@@ -54,15 +54,20 @@ func startup() error {
 		return errors.New("Could not load archive: " + err.Error())
 	}
 
-	//initialize discord connection
+	return nil
+}
+
+//attempts to connect to discord api using Api Key provided in configuration.
+//if no session can be created, session will be nil.
+func setupDiscordSession() (err error) {
 	session, err = discordgo.New("Bot " + config.Token)
 	if err != nil {
-		return errors.New("Could not create discord session: " + err.Error())
+		return
 	}
 	session.AddHandler(onMessage)
 	err = session.Open()
 	if err != nil {
-		return errors.New("Could not open discord connection: " + err.Error())
+		return
 	}
 
 	return nil
@@ -73,6 +78,11 @@ func main() {
 	if err != nil {
 		fmt.Println("ERROR: ", err)
 		return
+	}
+
+	err = setupDiscordSession()
+	if err != nil {
+		fmt.Println("Could not initialize discord session:  ", err.Error())
 	}
 
 	masterVoice.outputStats()
