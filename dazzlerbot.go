@@ -87,6 +87,8 @@ func main() {
 		for cli.Scan(); cli.Text() != "exit"; cli.Scan() {
 			cliInput <- cli.Text()
 		}
+		cliInput <- "exit"
+		close(cliInput)
 		return
 	}()
 
@@ -94,17 +96,16 @@ func main() {
 	fmt.Print("CMD > ")
 
 	for running {
-
 		select {
 		case <-sc: //os level signal to close
 			running = false
-			break
 		case input := <-cliInput: //handle input from command line
 			processCommand(strings.TrimSpace(input))
 		}
 	}
 
 	session.Close()
+	fmt.Println("Smell ya later")
 }
 
 //process commands from the cli interface. could also be used for the eventual processing of
@@ -131,6 +132,7 @@ func processCommand(command string) {
 		fmt.Println(masterVoice.Generate(config.SentenceLen))
 	case "exit":
 		running = false
+		return
 	default:
 		masterVoice.AddString(command)
 		fmt.Println("Added \"" + command + "\" to brain.")
