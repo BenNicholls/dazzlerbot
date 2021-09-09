@@ -91,13 +91,16 @@ func main() {
 	}()
 
 	running = true
+	fmt.Print("CMD > ")
+
 	for running {
+
 		select {
 		case <-sc: //os level signal to close
 			running = false
 			break
 		case input := <-cliInput: //handle input from command line
-			processCommand(input)
+			processCommand(strings.TrimSpace(input))
 		}
 	}
 
@@ -112,10 +115,28 @@ func processCommand(command string) {
 	}
 
 	switch command {
+	case "help":
+		fmt.Println("DAZZLERBOT COMMANDS:")
+		fmt.Println(" speak     Generates a sentence.")
+		fmt.Println(" stats     Prints the stats for the bot's current brain.")
+		fmt.Println(" output    Outputs the brain. WARNING: for large brains, this takes FOREVER.")
+		fmt.Println(" help      Prints a mysterious menu")
+		fmt.Println(" exit      Shuts down dazzlerbot.")
+		fmt.Println("All other input will be added as a sentence into the current brain. This input is NOT recorded permanently.")
+	case "stats":
+		masterVoice.outputStats()
+	case "output":
+		masterVoice.output()
+	case "speak":
+		fmt.Println(masterVoice.Generate(config.SentenceLen))
+	case "exit":
+		running = false
 	default:
 		masterVoice.AddString(command)
 		fmt.Println("Added \"" + command + "\" to brain.")
 	}
+
+	fmt.Print("CMD > ")
 }
 
 func onMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
