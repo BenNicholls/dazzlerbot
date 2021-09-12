@@ -142,6 +142,8 @@ func (c *Chain) Generate(n int) string {
 		p.shift(next)
 	}
 
+	words = prettify(words)
+
 	return strings.Join(words, " ")
 }
 
