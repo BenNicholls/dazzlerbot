@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"errors"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
@@ -57,8 +58,8 @@ func startup() error {
 	return nil
 }
 
-//attempts to connect to discord api using Api Key provided in configuration.
-//if no session can be created, session will be nil.
+// attempts to connect to discord api using Api Key provided in configuration.
+// if no session can be created, session will be nil.
 func setupDiscordSession() (err error) {
 	session, err = discordgo.New("Bot " + config.Token)
 	if err != nil {
@@ -74,36 +75,50 @@ func setupDiscordSession() (err error) {
 }
 
 func main() {
+
+	interactive := flag.Bool("i", false, "begin dazzlerbot in interactive mode. no discord session will be created.")
+	flag.Parse()
+
 	err := startup()
 	if err != nil {
 		fmt.Println("ERROR: ", err)
 		return
 	}
 
-	err = setupDiscordSession()
-	if err != nil {
-		fmt.Println("Could not initialize discord session:  ", err.Error())
+	sc := make(chan os.Signal, 1)
+	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
+	cliInput := make(chan string, 1)
+
+	if *interactive {
+		fmt.Println("Making interactive session")
+		cli := bufio.NewScanner(os.Stdin)
+		go func() {
+			for cli.Scan(); cli.Text() != "exit"; cli.Scan() {
+				cliInput <- cli.Text()
+			}
+			cliInput <- "exit"
+			close(cliInput)
+			return
+		}()
+	} else {
+		fmt.Println("Initializing Discord session.")
+		err = setupDiscordSession()
+		if err != nil {
+			fmt.Println("Could not initialize discord session:  ", err.Error())
+			fmt.Println("Shutting down...")
+			return
+		} else {
+			fmt.Println("Discord session online.")
+		}
+
 	}
 
 	masterVoice.outputStats()
-
 	fmt.Println("Bot is operational! Press Ctrl-C to shutdown.")
-	sc := make(chan os.Signal, 1)
-	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
-
-	cli := bufio.NewScanner(os.Stdin)
-	cliInput := make(chan string, 1)
-	go func() {
-		for cli.Scan(); cli.Text() != "exit"; cli.Scan() {
-			cliInput <- cli.Text()
-		}
-		cliInput <- "exit"
-		close(cliInput)
-		return
-	}()
-
 	running = true
-	fmt.Print("CMD > ")
+	if *interactive {
+		fmt.Print("CMD > ")
+	}
 
 	for running {
 		select {
@@ -114,12 +129,15 @@ func main() {
 		}
 	}
 
-	session.Close()
+	if !*interactive {
+		fmt.Println("Closing discord session.")
+		session.Close()
+	}
+
 	fmt.Println("Smell ya later")
 }
 
-//process commands from the cli interface. could also be used for the eventual processing of
-//discord slash commands, if those ever make it in
+// process commands from the cli interface in interactive mode.
 func processCommand(command string) {
 	if command == "" {
 		return
@@ -151,6 +169,7 @@ func processCommand(command string) {
 	fmt.Print("CMD > ")
 }
 
+//Callback that runs whenever a new message is sent in a server/channel that dazzlerbot has access to
 func onMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
 	//keep dazzlerbot from responding to itself
 	if m.Author.ID == s.State.User.ID {

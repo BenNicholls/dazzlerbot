@@ -7,3 +7,5 @@ DazzlerBot is a rudimentary chatbot that listens to messages on discord and adds
 ## Instructions
 
 *Coming soon, I promise!*
+
+In the meantime, it should be known: you can play with dazzlerbot in interactive mode by passing it the "-i" flag on launch. No discord session is created in this mode.
