@@ -10,6 +10,9 @@ func TestIsWord(t *testing.T) {
 	tests["\""] = false
 	tests["\"hello\""] = true
 	tests["!!!!!!!"] = false
+	tests["https://www.whatever.com"] = false
+	tests["www.things.com"] = false
+	tests["http://hellobaby.com"] = false
 
 	for s, res := range tests {
 		if isWord(s) != res {
