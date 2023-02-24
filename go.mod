@@ -1,8 +1,14 @@
 module github.com/bennicholls/dazzlerbot
 
-go 1.16
+go 1.20
 
 require (
-	github.com/bwmarrin/discordgo v0.23.2
+	github.com/bwmarrin/discordgo v0.27.0
 	gopkg.in/yaml.v2 v2.4.0
+)
+
+require (
+	github.com/gorilla/websocket v1.5.0 // indirect
+	golang.org/x/crypto v0.6.0 // indirect
+	golang.org/x/sys v0.5.0 // indirect
 )
