@@ -121,17 +121,25 @@ func (c *Chain) GetNextWord(key string) string {
 		return suf
 	}
 
-	//should never reach this
-	return "[ERROR. INVALID PREFIX]"
+	//should never reach this. abort!
+	return ENDOFSENTENCE
 }
 
 func (c *Chain) Generate(n int) string {
+	return c.GenerateWithPrefix(n, make([]string, 0))
+}
+
+func (c *Chain) GenerateWithPrefix(n int, prefixWords []string) string {
 	if len(c.chain) == 0 && len(c.singletons) == 0 {
 		return "Error: could not generate nonsense, brain empty"
 	}
 
 	p := make(prefix, c.prefixLen)
 	words := make([]string, 0)
+	for _, word := range prefixWords {
+		p.shift(word)
+		words = append(words, word)
+	}
 
 	for i := 0; i < n; i++ {
 		next := c.GetNextWord(p.key())
@@ -147,7 +155,7 @@ func (c *Chain) Generate(n int) string {
 	return strings.Join(words, " ")
 }
 
-//outputs the entire chain. WARNING: for large chains, this takes FOREVER.
+// outputs the entire chain. WARNING: for large chains, this takes FOREVER.
 func (c *Chain) output() {
 	for pre, sufs := range c.chain {
 		fmt.Print("(" + strconv.Itoa(sufs.total) + ") " + pre + ": ")
@@ -159,7 +167,7 @@ func (c *Chain) output() {
 	}
 }
 
-//computes and outputs stats for the chain
+// computes and outputs stats for the chain
 func (c *Chain) outputStats() {
 	fmt.Println("Total prefixes: ", len(c.chain)+len(c.singletons))
 	totalSufs := 0

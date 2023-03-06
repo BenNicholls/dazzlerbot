@@ -138,19 +138,27 @@ func main() {
 }
 
 // process commands from the cli interface in interactive mode.
-func processCommand(command string) {
-	if command == "" {
+func processCommand(rawCommand string) {
+	if rawCommand == "" {
 		return
+	}
+
+	splitCommand := strings.Split(rawCommand, " ")
+	command := splitCommand[0]
+	args := make([]string, 0)
+	if len(splitCommand) > 1 {
+		args = splitCommand[1:]
 	}
 
 	switch command {
 	case "help":
 		fmt.Println("DAZZLERBOT COMMANDS:")
-		fmt.Println(" speak     Generates a sentence.")
-		fmt.Println(" stats     Prints the stats for the bot's current brain.")
-		fmt.Println(" output    Outputs the brain. WARNING: for large brains, this takes FOREVER.")
-		fmt.Println(" help      Prints a mysterious menu")
-		fmt.Println(" exit      Shuts down dazzlerbot.")
+		fmt.Println(" speak              Generates a sentence.")
+		fmt.Println(" stats              Prints the stats for the bot's current brain.")
+		fmt.Println(" output             Outputs the brain. WARNING: for large brains, this takes FOREVER.")
+		fmt.Println(" respond <phrase>   Responds to a phrase, interpreting the phrase as some kind of bot command.")
+		fmt.Println(" help               Prints a mysterious menu")
+		fmt.Println(" exit               Shuts down dazzlerbot.")
 		fmt.Println("All other input will be added as a sentence into the current brain. This input is NOT recorded permanently.")
 	case "stats":
 		masterVoice.outputStats()
@@ -158,6 +166,8 @@ func processCommand(command string) {
 		masterVoice.output()
 	case "speak":
 		fmt.Println(masterVoice.Generate(config.SentenceLen))
+	case "respond":
+		fmt.Println(InterpretCommand(args))
 	case "exit":
 		running = false
 		return
@@ -169,7 +179,7 @@ func processCommand(command string) {
 	fmt.Print("CMD > ")
 }
 
-//Callback that runs whenever a new message is sent in a server/channel that dazzlerbot has access to
+// Callback that runs whenever a new message is sent in a server/channel that dazzlerbot has access to
 func onMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
 	//keep dazzlerbot from responding to itself
 	if m.Author.ID == s.State.User.ID {
@@ -183,22 +193,31 @@ func onMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	//generate and send response (if necessary)
-	message := ""
+	response := ""
+
+	//detect special response modes.
+	if strings.HasPrefix(strings.ToLower(m.Message.Content), "dazzlerbot") {
+		//interpret as a command to dazzlerbot. of course this won't always be the case though.
+		var commandString []string = strings.Split(m.Message.Content, " ")
+		response = InterpretCommand(commandString[1:])
+	}
 
 	//search for triggers
-	for _, word := range config.TriggerWords {
-		if strings.Contains(strings.ToLower(m.Content), word) {
-			message = masterVoice.Generate(config.SentenceLen)
-			break
+	if response == "" {
+		for _, word := range config.TriggerWords {
+			if strings.Contains(strings.ToLower(m.Content), word) {
+				response = masterVoice.Generate(config.SentenceLen)
+				break
+			}
 		}
 	}
 
 	//if not triggered, generate messages randomly according to config.ResponseFrequency
-	if message == "" && config.ResponseFrequency > 0 && rand.Intn(config.ResponseFrequency) == 0 {
-		message = masterVoice.Generate(config.SentenceLen)
+	if response == "" && config.ResponseFrequency > 0 && rand.Intn(config.ResponseFrequency) == 0 {
+		response = masterVoice.Generate(config.SentenceLen)
 	}
 
-	if message != "" {
-		s.ChannelMessageSend(m.ChannelID, message)
+	if response != "" {
+		s.ChannelMessageSend(m.ChannelID, response)
 	}
 }
