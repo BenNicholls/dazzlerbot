@@ -3,7 +3,7 @@ package main
 import "strings"
 
 //signature for command functions. all command functions take a list of arguments and return a generated string.
-type commandFunc func([]string) string 
+type commandFunc func([]string) string
 
 //map commands to the corresponding functions
 var commandMap map[string]commandFunc
@@ -23,7 +23,7 @@ func InterpretCommand(command []string) (response string) {
 	return
 }
 
-//Handles "What is" or "What are" queries. 
+//Handles "What is" or "What are" queries.
 //Ex: INPUT: dazzlerbot, what is love?
 //    OUTPUT: Love is incredible!
 func WhatCommand(args []string) (response string) {

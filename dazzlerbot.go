@@ -199,7 +199,10 @@ func onMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if strings.HasPrefix(strings.ToLower(m.Message.Content), "dazzlerbot") {
 		//interpret as a command to dazzlerbot. of course this won't always be the case though.
 		var commandString []string = strings.Split(m.Message.Content, " ")
-		response = InterpretCommand(commandString[1:])
+		commandString = commandString[1:]
+		if len(commandString) != 0{
+			response = InterpretCommand(commandString)	
+		}		
 	}
 
 	//search for triggers
