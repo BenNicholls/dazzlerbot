@@ -2,16 +2,18 @@ package main
 
 import (
 	"math/rand"
+	"slices"
 	"strings"
 	"unicode"
-
-	"golang.org/x/exp/slices"
+	"unicode/utf8"
 )
 
-var endings []string
+var allowed_endings []string
+var disallowed_endings []string
 
 func init() {
-	endings = []string{"!", ".", "?"}
+	allowed_endings = []string{"!", ".", "?"}
+	disallowed_endings = []string{","}
 }
 
 // makes the words pretty! cleans up formatting errors, etc.
@@ -29,11 +31,13 @@ func prettify(words []string) (pretty []string) {
 		}
 	}
 
-	//ensure last word has ending punctuation
-	for i := len(pretty) - 1; i >= 0; i-- {
-		if isWord(pretty[i]) {
-			pretty[i] = punctuate(pretty[i])
-			break
+	//ensure last word has ending punctuation, unless sentence is a single word long
+	if len(pretty) > 1 {
+		for i, word := range slices.Backward(pretty) {
+			if isWord(word) {
+				pretty[i] = punctuate(word)
+				break
+			}
 		}
 	}
 
@@ -79,25 +83,33 @@ func capitalize(word string) (cap string) {
 func punctuate(word string) (punc string) {
 	letters := strings.Split(word, "")
 
-	//trim current trailing symbols
-	for i := len(letters) - 1; i >= 0; i-- {
+	for _, letter := range slices.Backward(letters) {
 		//if already punctuated, return
-		if slices.Contains(endings, letters[len(letters)-1]) {
+		if slices.Contains(allowed_endings, letter) {
 			break
 		}
 
-		var letterAsRune rune
-		for _, letter := range letters[len(letters)-1] { //trick to convert string character to rune.
-			letterAsRune = letter
-		}
-		if unicode.IsPunct(letterAsRune) {
+		//trim weird punctuation?
+		if slices.Contains(disallowed_endings, letter) {
 			letters = letters[:len(letters)-1]
+		} else if unicode.IsPunct(stringAsRune(letter)) {
+			//println("unicode thinks this is punctuation: ", letter)
+			//letters = letters[:len(letters)-1]
+			//TODO: handle random weirdo punctuation here
 		} else {
-			letters = append(letters, endings[rand.Intn(len(endings))])
+			letters = append(letters, allowed_endings[rand.Intn(len(allowed_endings))])
 			break
 		}
 	}
 
 	punc = strings.Join(letters, "")
+
+	return
+}
+
+// returns the rune for the first character in string s.
+// does NOT check to see if s is a proper string, so be careful
+func stringAsRune(s string) (r rune) {
+	r, _ = utf8.DecodeRuneInString(s)
 	return
 }
