@@ -5,7 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -37,7 +37,7 @@ func startup() error {
 	}
 	defer configFile.Close()
 
-	data, err := ioutil.ReadAll(configFile)
+	data, err := io.ReadAll(configFile)
 	err = yaml.Unmarshal(data, &config)
 	if err != nil {
 		return errors.New("Could not read config file. Could be a formatting problem. If this problem persists, delete config.txt and have run dazzbot again to generate a new default config file.")
@@ -156,6 +156,7 @@ func processCommand(rawCommand string) {
 		fmt.Println(" speak              Generates a sentence.")
 		fmt.Println(" stats              Prints the stats for the bot's current brain.")
 		fmt.Println(" output             Outputs the brain. WARNING: for large brains, this takes FOREVER.")
+		fmt.Println(" outputfile         Outputs the brain to file 'brain.txt'. This overwrites the old brain.txt if it exists.")
 		fmt.Println(" respond <phrase>   Responds to a phrase, interpreting the phrase as some kind of bot command.")
 		fmt.Println(" help               Prints a mysterious menu")
 		fmt.Println(" exit               Shuts down dazzlerbot.")
@@ -163,7 +164,9 @@ func processCommand(rawCommand string) {
 	case "stats":
 		masterVoice.outputStats()
 	case "output":
-		masterVoice.output()
+		masterVoice.output(false)
+	case "outputfile":
+		masterVoice.output(true)
 	case "speak":
 		fmt.Println(masterVoice.Generate(config.SentenceLen))
 	case "respond":
@@ -200,9 +203,9 @@ func onMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
 		//interpret as a command to dazzlerbot. of course this won't always be the case though.
 		var commandString []string = strings.Split(m.Message.Content, " ")
 		commandString = commandString[1:]
-		if len(commandString) != 0{
-			response = InterpretCommand(commandString)	
-		}		
+		if len(commandString) != 0 {
+			response = InterpretCommand(commandString)
+		}
 	}
 
 	//search for triggers

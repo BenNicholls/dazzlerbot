@@ -51,18 +51,23 @@ func (s suffixes) rand() string {
 	return "[ERROR: could not randomize good??]"
 }
 
-func (s suffixes) output() {
+func (s suffixes) output() string {
+	var sb strings.Builder
 	for suf, num := range s.sufs {
 		if suf == ENDOFSENTENCE {
-			fmt.Print("<END>")
+			sb.WriteString("<END>")
 		} else {
-			fmt.Print(suf)
+			sb.WriteString(suf)
 		}
 		if num > 1 {
-			fmt.Print(" (x" + strconv.Itoa(num) + ")")
+			sb.WriteString("(x")
+			sb.WriteString(strconv.Itoa(num))
+			sb.WriteString(")")
 		}
-		fmt.Print(" ")
+		sb.WriteString(" ")
 	}
+
+	return sb.String()
 }
 
 type Chain struct {
@@ -160,15 +165,69 @@ func (c *Chain) GenerateWithPrefix(n int, prefixWords []string) string {
 	return strings.Join(words, " ")
 }
 
-// outputs the entire chain. WARNING: for large chains, this takes FOREVER.
-func (c *Chain) output() {
-	for pre, sufs := range c.chain {
-		fmt.Print("(" + strconv.Itoa(sufs.total) + ") " + pre + ": ")
-		sufs.output()
-		fmt.Print("\n")
+// outputs the entire chain. WARNING: for large chains, this takes FOREVER unless you're outputting
+// to a file
+func (c *Chain) output(to_file bool) {
+	var file *os.File
+	if to_file {
+		var ferr error
+		file, ferr = os.Create("brain.txt")
+		if ferr != nil {
+			fmt.Println("Could not output brain: ", ferr)
+			return
+		}
+		defer file.Close()
+
+		fmt.Println("outputting brain to file 'brain.txt'")
 	}
+
+	var sb strings.Builder
+
+	for pre, sufs := range c.chain {
+		sb.WriteString("(" + strconv.Itoa(sufs.total) + ") ")
+		if pre == " " {
+			sb.WriteString("<START>")
+		} else if strings.HasPrefix(pre, " ") {
+			sb.WriteString("<START>" + pre)
+		} else {
+			sb.WriteString(pre)
+		}
+
+		sb.WriteString(": " + sufs.output() + "\n")
+
+		if !to_file {
+			fmt.Print(sb.String())
+			sb.Reset()
+		}
+	}
+
 	for pre, suf := range c.singletons {
-		fmt.Println("(1) " + pre + ": " + suf)
+		sb.WriteString("(1) ")
+		if pre == " " {
+			sb.WriteString("<START>")
+		} else if strings.HasPrefix(pre, " ") {
+			sb.WriteString("<START>" + pre)
+		} else {
+			sb.WriteString(pre)
+		}
+		
+		sb.WriteString(": ")
+		if suf == ENDOFSENTENCE {
+			sb.WriteString("<END>")
+		} else {
+			sb.WriteString(suf)
+		}
+		sb.WriteString("\n")
+
+		if !to_file {
+			fmt.Print(sb.String())
+			sb.Reset()
+		}
+	}
+
+	if to_file {
+		file.WriteString(sb.String())
+		fmt.Println("output complete!")
 	}
 }
 
