@@ -84,41 +84,46 @@ func (c *Chain) init() {
 
 func (c *Chain) Build(r io.Reader) {
 	br := bufio.NewReader(r)
-	for line, err := br.ReadString('\n'); err == nil; line, err = br.ReadString('\n') {
-		line = strings.TrimSpace(line)
-		if line == "" {
-			continue
+	for line, err := br.ReadString('\n'); true; line, err = br.ReadString('\n') {
+		if err != nil && err != io.EOF {
+			break
+		}
+		
+		if line = strings.TrimSpace(line); line != "" {
+			lr := bufio.NewReader(strings.NewReader(line))
+			p := make(prefix, c.prefixLen)
+			for {
+				var next string
+				if _, f_err := fmt.Fscan(lr, &next); f_err != nil {
+					next = ENDOFSENTENCE
+				}
+
+				if sufs, ok := c.chain[p.key()]; ok { //check chain
+					sufs.add(next)
+					c.chain[p.key()] = sufs
+				} else if suf, ok := c.singletons[p.key()]; ok { //check singletons. if found, remove and add to chain
+					delete(c.singletons, p.key())
+					sufs := suffixes{
+						sufs:  map[string]int{},
+						total: 0,
+					}
+					sufs.sufs = make(map[string]int)
+					sufs.add(suf)
+					sufs.add(next)
+					c.chain[p.key()] = sufs
+				} else { //new prefix. add to singletons
+					c.singletons[p.key()] = next
+				}
+
+				if next == ENDOFSENTENCE {
+					break
+				}
+				p.shift(next)
+			}
 		}
 
-		lr := bufio.NewReader(strings.NewReader(line))
-		p := make(prefix, c.prefixLen)
-		for {
-			var next string
-			if _, err := fmt.Fscan(lr, &next); err != nil {
-				next = ENDOFSENTENCE
-			}
-
-			if sufs, ok := c.chain[p.key()]; ok { //check chain
-				sufs.add(next)
-				c.chain[p.key()] = sufs
-			} else if suf, ok := c.singletons[p.key()]; ok { //check singletons. if found, remove and add to chain
-				delete(c.singletons, p.key())
-				sufs := suffixes{
-					sufs:  map[string]int{},
-					total: 0,
-				}
-				sufs.sufs = make(map[string]int)
-				sufs.add(suf)
-				sufs.add(next)
-				c.chain[p.key()] = sufs
-			} else { //new prefix. add to singletons
-				c.singletons[p.key()] = next
-			}
-
-			if next == ENDOFSENTENCE {
-				break
-			}
-			p.shift(next)
+		if err == io.EOF {
+			break
 		}
 	}
 }
@@ -210,7 +215,7 @@ func (c *Chain) output(to_file bool) {
 		} else {
 			sb.WriteString(pre)
 		}
-		
+
 		sb.WriteString(": ")
 		if suf == ENDOFSENTENCE {
 			sb.WriteString("<END>")

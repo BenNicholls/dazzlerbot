@@ -155,10 +155,10 @@ func processCommand(rawCommand string) {
 		fmt.Println("DAZZLERBOT COMMANDS:")
 		fmt.Println(" speak              Generates a sentence.")
 		fmt.Println(" stats              Prints the stats for the bot's current brain.")
-		fmt.Println(" output             Outputs the brain. WARNING: for large brains, this takes FOREVER.")
+		fmt.Println(" output             Outputs the brain to console. WARNING: for large brains, this takes FOREVER.")
 		fmt.Println(" outputfile         Outputs the brain to file 'brain.txt'. This overwrites the old brain.txt if it exists.")
 		fmt.Println(" respond <phrase>   Responds to a phrase, interpreting the phrase as some kind of bot command.")
-		fmt.Println(" help               Prints a mysterious menu")
+		fmt.Println(" help               Prints a mysterious menu.")
 		fmt.Println(" exit               Shuts down dazzlerbot.")
 		fmt.Println("All other input will be added as a sentence into the current brain. This input is NOT recorded permanently.")
 	case "stats":
