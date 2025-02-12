@@ -189,31 +189,33 @@ func onMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	if m.Message.Content != "" {
-		//add new message to master voice
-		writeStringToUserArchive(m.Author.ID, m.Message.Content)
-		masterVoice.AddString(m.Message.Content)
-	}
-
 	//generate and send response (if necessary)
 	response := ""
 
-	//detect special response modes.
-	if strings.HasPrefix(strings.ToLower(m.Message.Content), "dazzlerbot") {
-		//interpret as a command to dazzlerbot. of course this won't always be the case though.
-		var commandString []string = strings.Split(m.Message.Content, " ")
-		commandString = commandString[1:]
-		if len(commandString) != 0 {
-			response = InterpretCommand(commandString)
+	if m.Content != "" {
+		//detect special response modes.
+		if strings.HasPrefix(strings.ToLower(m.Message.Content), "dazzlerbot ") {
+			//interpret as a command to dazzlerbot. of course this won't always be the case though.
+			var commandString []string = strings.Split(m.Message.Content, " ")
+			commandString = commandString[1:]
+			if len(commandString) != 0 {
+				response = InterpretCommand(commandString)
+			}
 		}
-	}
 
-	//search for triggers
-	if response == "" {
-		for _, word := range config.TriggerWords {
-			if strings.Contains(strings.ToLower(m.Content), word) {
-				response = masterVoice.Generate(config.SentenceLen)
-				break
+		//if the message wasn't a command or other kind of special response, add the message to master voice
+		if response == "" {
+			writeStringToUserArchive(m.Author.ID, m.Message.Content)
+			masterVoice.AddString(m.Message.Content)
+		}
+
+		//search for triggers
+		if response == "" {
+			for _, word := range config.TriggerWords {
+				if strings.Contains(strings.ToLower(m.Content), word) {
+					response = masterVoice.Generate(config.SentenceLen)
+					break
+				}
 			}
 		}
 	}
