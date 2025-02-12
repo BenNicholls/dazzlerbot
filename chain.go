@@ -80,6 +80,11 @@ func (c *Chain) init() {
 func (c *Chain) Build(r io.Reader) {
 	br := bufio.NewReader(r)
 	for line, err := br.ReadString('\n'); err == nil; line, err = br.ReadString('\n') {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+
 		lr := bufio.NewReader(strings.NewReader(line))
 		p := make(prefix, c.prefixLen)
 		for {
@@ -209,6 +214,7 @@ func (c *Chain) inputTextFromFile(filePath string) error {
 }
 
 func (c *Chain) AddString(s string) {
+	s = strings.TrimSpace(s)
 	if s == "" {
 		return
 	}
