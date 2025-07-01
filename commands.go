@@ -17,6 +17,7 @@ func init() {
 	commandMap = make(map[string]commandFunc)
 	commandMap["what"] = WhatCommand
 	commandMap["who"] = WhatCommand
+	commandMap["where"] = WhereCommand
 }
 
 // figures out what kind of command has been given, if any
@@ -49,6 +50,13 @@ func WhatCommand(args []string) (response string) {
 	return
 }
 
+func WhereCommand(args []string) (response string) {
+	if (strings.ToLower(args[0]) == "is" || strings.ToLower(args[0]) == "are") && len(args) > 1 {
+		var responsePrefix []string = make([]string, 0)
+		for _, word := range args[1:] {
+			responsePrefix = append(responsePrefix, strings.Trim(word, "?!.\"()"))
+		}
+		responsePrefix = append(responsePrefix, args[0], "somewhere")
 		response = masterVoice.GenerateWithPrefix(config.SentenceLen, responsePrefix)
 	}
 	return
