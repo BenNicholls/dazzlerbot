@@ -97,7 +97,15 @@ func punctuate(word string) (punc string) {
 			//letters = letters[:len(letters)-1]
 			//TODO: handle random weirdo punctuation here
 		} else {
-			letters = append(letters, allowed_endings[rand.Intn(len(allowed_endings))])
+			if rand.Intn(2) == 0 {
+				letters = append(letters, ".")
+			} else {
+				punc := allowed_endings[rand.Intn(len(allowed_endings))]
+				letters = append(letters, punc)
+				if rand.Intn(5) == 0 {
+					letters = append(letters, punc, punc)
+				}
+			}
 			break
 		}
 	}
