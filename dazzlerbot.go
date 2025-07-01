@@ -65,6 +65,7 @@ func setupDiscordSession() (err error) {
 	if err != nil {
 		return
 	}
+
 	session.AddHandler(onMessage)
 	err = session.Open()
 	if err != nil {
@@ -75,7 +76,6 @@ func setupDiscordSession() (err error) {
 }
 
 func main() {
-
 	interactive := flag.Bool("i", false, "begin dazzlerbot in interactive mode. no discord session will be created.")
 	flag.Parse()
 
@@ -194,13 +194,13 @@ func onMessage(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if m.Content != "" {
 		//detect special response modes.
-		if strings.HasPrefix(strings.ToLower(m.Message.Content), "dazzlerbot ") {
+		if strings.HasPrefix(strings.ToLower(m.Message.Content), "dazzlerbot") {
 			//interpret as a command to dazzlerbot. of course this won't always be the case though.
-			var commandString []string = strings.Split(m.Message.Content, " ")
-			commandString = commandString[1:]
-			if len(commandString) != 0 {
-				response = InterpretCommand(commandString)
+			var command []string = strings.Split(m.Message.Content, " ")
+			if len(command) > 1 {
+				command = command[1:] // strip off the "dazzlerbot"
 			}
+			response = InterpretCommand(command)
 		}
 
 		//if the message wasn't a command or other kind of special response, add the message to master voice
